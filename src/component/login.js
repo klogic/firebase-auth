@@ -1,5 +1,7 @@
 import React, { Component } from 'react';
 import fire from '../fire';
+import { Link } from "react-router-dom";
+import ShowProfile from './showprofile';
 
 export default class Login extends Component{
   constructor(props){
@@ -8,39 +10,52 @@ export default class Login extends Component{
       email : '',
       password : '',
       errorLogin : '',
+      successLogin: false
     }
+    this.login = this.login.bind(this);
   }
 
-render(){
-    const login = (event) => {
-      event.preventDefault();
-      const email = this.state.email;
-      const password = this.state.password;
-      fire.auth()
-        .createUserWithEmailAndPassword(email, password)
-        .then((result) => {
-          console.log(result);
-          var user = fire.auth().currentUser;
-          if (user != null) {
-            user.providerData.forEach(function (profile) {
-              console.log("  Provider-specific UID: " + profile.uid);
-              console.log("  Email: " + profile.email);
-            });
-          }
-        })
-        .catch((error) => {
-          this.setState({errorLogin:error.message})
-        });
-    }
-    const inputHandle = (event) => {
-      const name = event.target.name;
-      const value = event.target.value;
-      this.setState({[name]: value, errorLogin: ''})
+  login = (event) => {
+    event.preventDefault();
+    const email = this.state.email;
+    const password = this.state.password;
+
+    fire.auth()
+      .signInWithEmailAndPassword(email, password)
+      .then((result) => {
+        var user = fire.auth().currentUser;
+        if (user != null) {
+          this.setState({successLogin: true})
+          user.providerData.forEach(function (profile) {
+            this.setState({email:  profile.email})
+            console.log("  Provider-specific UID: " + profile.uid);
+            console.log("  Email: " + profile.email);
+          });
+        }
+      })
+      .catch((error) => {
+        this.setState({errorLogin:error.message})
+      });
+  }
+
+  inputHandle = (event) => {
+    const name = event.target.name;
+    const value = event.target.value;
+    this.setState({[name]: value, errorLogin: ''})
+  }
+
+  render(){
+    if(this.state.successLogin === true){
+      return(
+        <div className="container">
+          <ShowProfile email={this.state.email}/>
+        </div>
+      )
     }
     return(
       <div className="container">
         <div className="col-md-5" style={{"margin": "auto"}}>
-          <form onSubmit={login}>
+          <form onSubmit={this.login}>
             <h2 className="form-group">Login</h2>
             <h5 className="form-group text-danger" id="errorLogin">{ this.state.errorLogin }</h5>
             <div className="form-group">
@@ -50,7 +65,7 @@ render(){
                 name="email"
                 aria-describedby="emailHelp"
                 placeholder="Enter email"
-                onChange={(event) => { inputHandle(event) }}/>
+                onChange={(event) => { this.inputHandle(event) }}/>
             </div>
             <div className="form-group">
               <input type="password"
@@ -63,7 +78,7 @@ render(){
             <button type="submit" className="btn btn-primary">Submit</button>
             <hr/>
             <div className="form-group">
-              <span>Not have user? Register here.</span>
+              <span>Not have user? Register <Link to="/register"> here </Link></span>
             </div>
           </form>
         </div>
